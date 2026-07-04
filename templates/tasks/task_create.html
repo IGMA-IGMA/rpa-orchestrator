@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <h2>Создать новую задачу</h2>
+        <form method="post" class="card p-4">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary">Запустить</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

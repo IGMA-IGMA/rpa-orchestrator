@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>Список задач</h2>
+        
+        <!-- Фильтрация -->
+        <form method="get" class="row g-3 mb-3">
+            <div class="col-auto">
+                <select name="status" class="form-select">
+                    <option value="">Все статусы</option>
+                    <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>В очереди</option>
+                    <option value="processing" {% if request.GET.status == 'processing' %}selected{% endif %}>Выполняется</option>
+                    <option value="success" {% if request.GET.status == 'success' %}selected{% endif %}>Успешно</option>
+                    <option value="failure" {% if request.GET.status == 'failure' %}selected{% endif %}>Ошибка</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <select name="bot_type" class="form-select">
+                    <option value="">Все боты</option>
+                    <option value="pdf" {% if request.GET.bot_type == 'pdf' %}selected{% endif %}>Генератор PDF</option>
+                    <option value="email" {% if request.GET.bot_type == 'email' %}selected{% endif %}>Парсер email</option>
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary">Применить</button>
+                <a href="{% url 'tasks:task_list' %}" class="btn btn-secondary">Сбросить</a>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'tasks:export_csv' %}" class="btn btn-success">Экспорт CSV</a>
+            </div>
+        </form>
+
+        <!-- Таблица задач -->
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Тип бота</th>
+                        <th>Статус</th>
+                        <th>Создана</th>
+                        <th>Результат</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks %}
+                    <tr>
+                        <td>{{ task.id }}</td>
+                        <td>{{ task.get_bot_type_display }}</td>
+                        <td class="task-status status-{{ task.status }}">{{ task.get_status_display }}</td>
+                        <td>{{ task.created_at|date:"d.m.Y H:i" }}</td>
+                        <td>
+                            {% if task.result_file %}
+                                <a href="{{ task.result_file.url }}" target="_blank">Скачать файл</a>
+                            {% elif task.result_log %}
+                                <span class="text-muted">{{ task.result_log|truncatechars:30 }}</span>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center">Нет задач</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Пагинация -->
+        {% if is_paginated %}
+        <nav>
+            <ul class="pagination">
+                {% if page_obj.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page=1">Первая</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Предыдущая</a></li>
+                {% endif %}
+                <li class="page-item active"><span class="page-link">{{ page_obj.number }}</span></li>
+                {% if page_obj.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Следующая</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Последняя</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

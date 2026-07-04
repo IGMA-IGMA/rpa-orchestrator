@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h2>Дашборд статистики</h2>
+        <div class="row mt-4">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Всего задач</h5>
+                        <p class="display-6">{{ total_tasks }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center border-warning">
+                    <div class="card-body">
+                        <h5 class="card-title">В очереди</h5>
+                        <p class="display-6">{{ status_counts.pending|default:0 }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center border-info">
+                    <div class="card-body">
+                        <h5 class="card-title">Выполняется</h5>
+                        <p class="display-6">{{ status_counts.processing|default:0 }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center border-success">
+                    <div class="card-body">
+                        <h5 class="card-title">Успешно</h5>
+                        <p class="display-6">{{ status_counts.success|default:0 }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mt-3">
+                <div class="card text-center border-danger">
+                    <div class="card-body">
+                        <h5 class="card-title">Ошибки</h5>
+                        <p class="display-6">{{ status_counts.failure|default:0 }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mt-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h5 class="card-title">Среднее время выполнения</h5>
+                        <p class="display-6">{{ avg_duration|floatformat:2 }} с</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
