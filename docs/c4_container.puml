@@ -1,0 +1,54 @@
+@startuml
+skinparam backgroundcolor #1E1E24
+skinparam defaultFontName "Verdana"
+skinparam DefaultTextAlignment center
+skinparam componentStyle rectangle
+
+' Стилизация контейнеров и баз данных C4
+skinparam rectangle {
+    BackgroundColor<<Person>> #08427B
+    FontColor<<Person>> #FFFFFF
+    
+    BackgroundColor<<Container>> #438DD5
+    BorderColor<<Container>> #2B659B
+    FontColor<<Container>> #FFFFFF
+    
+    BackgroundColor<<Database>> #2B659B
+    BorderColor<<Database>> #1B456B
+    FontColor<<Database>> #FFFFFF
+    
+    BackgroundColor<<ExternalSystem>> #666666
+    FontColor<<ExternalSystem>> #FFFFFF
+}
+
+skinparam ArrowColor #5DADE2
+skinparam ArrowThickness 2
+skinparam ArrowFontColor #AEB6BF
+
+title [C4 Level 2] RPA Оркестратор - Диаграмма контейнеров (Container Diagram)\n
+
+rectangle "👨 Оператор / Разработчик\n[Person]" as user <<Person>>
+
+rectangle "Docker Compose Environment [System Boundary]" {
+    rectangle "💻 Web UI\n[Container: Bootstrap 5, HTMX]\n\nИнтерактивный дашборд" as web_ui <<Container>>
+    rectangle "🐍 Django Web Application\n[Container: Python 4.2 / Gunicorn]\n\nБизнес-логика, API, Health-check" as django_app <<Container>>
+    rectangle "🧠 Redis 7\n[Container: Redis]\n\nОчередь сообщений (Брокер) и кэш" as redis_broker <<Container>>
+    rectangle "⚙️ Celery Worker\n[Container: Python / Celery 5.3]\n\nФоновый парсинг и PDF отчеты" as celery_worker <<Container>>
+    rectangle "🗄️ PostgreSQL 15 Database\n[Container: PostgreSQL]\n\nХранение логов, ботов и настроек" as postgres_db <<Database>>
+}
+
+rectangle "📧 Почтовый сервер (IMAP)\n[External System]" as email_server <<ExternalSystem>>
+
+' Логические связи сверху вниз по иерархии C4
+user -down-> web_ui : Визуализирует дашборд\n[HTTPS]
+web_ui -down-> django_app : Отправляет асинхронные запросы\n[HTTP / AJAX (HTMX)]
+
+django_app -down-> postgres_db : Чтение/запись логов и настроек\n[Django ORM]
+django_app -right-> redis_broker : Ставит задачи в очередь\n[Celery Protocol]
+
+celery_worker -left-> redis_broker : Получает новые задачи\n[Celery Protocol]
+celery_worker -down-> postgres_db : Обновляет статусы сессий\n[Django ORM]
+celery_worker -right-> email_server : Забирает письма для парсинга\n[IMAP / SSL]
+
+@enduml
+

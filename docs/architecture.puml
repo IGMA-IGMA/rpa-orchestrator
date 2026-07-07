@@ -1,0 +1,84 @@
+@startuml
+' Устанавливаем фиксированный красивый темный фон
+skinparam backgroundcolor #1E1E24
+
+skinparam componentStyle rectangle
+skinparam defaultFontName "Verdana"
+skinparam DefaultTextAlignment center
+
+' Стилизация главного заголовка (белый контрастный цвет)
+skinparam title {
+    FontColor #FFFFFF
+    FontSize 18
+}
+
+' Стилизация стрелок (яркие неоновые линии, которые отлично видны на темном)
+skinparam ArrowColor #5DADE2
+skinparam ArrowThickness 2
+skinparam ArrowFontColor #AEB6BF
+
+' Стилизация контейнеров-групп
+skinparam node {
+    BackgroundColor #2C3E50
+    BorderColor #4A6572
+    FontColor #FFFFFF
+}
+
+' Стилизация клиентских компонентов
+skinparam component {
+    BackgroundColor #34495E
+    BorderColor #5DADE2
+    FontColor #FFFFFF
+}
+
+' Стилизация баз данных (Redis и Postgres)
+skinparam database {
+    BackgroundColor #2E4053
+    BorderColor #F4D03F
+    FontColor #FFFFFF
+}
+
+' Стилизация заметок (Notes)
+skinparam note {
+    BackgroundColor #283747
+    BorderColor #5DADE2
+    FontColor #EAEDED
+}
+
+title Архитектура RPA Оркестратора\n
+
+node "Клиентская часть" {
+    component "💻 Веб-Браузер\n(Bootstrap 5 + HTMX)" as User
+}
+
+node "Контейнеры Docker Compose" {
+    component "🐍 Django Application\n(Core / Dashboard / API)" as Django
+    component "⚙️ Celery Worker\n(Фоновые задачи)" as Celery
+    database "🗄️ PostgreSQL 15\n(База данных)" as DB
+    database "🧠 Redis 7\n(Брокер и Кэш)" as Redis
+}
+
+' Выравнивание слоев строго сверху вниз
+User -down-> Django : HTTP / AJAX
+
+' Располагаем Django, Redis и Celery строго в одну горизонтальную линию
+Django -right-> Redis : 1. Пуш задач / Кэш
+Redis -right-> Celery : 2. Забор задач
+
+' Базу данных спускаем строго под приложения
+Django -down-> DB : Django ORM
+Celery -down-> DB : Обновление статусов
+
+' Добавляем понятные заметки-сноски, прикрепленные к компонентам
+note bottom of Celery
+  **Фоновые процессы:**
+  * BeautifulSoup4 (Парсинг Email)
+  * ReportLab (Генерация PDF отчетов)
+end note
+
+note top of Django
+  * Health-check эндпоинт
+  * Экспорт логов в CSV
+end note
+
+@enduml

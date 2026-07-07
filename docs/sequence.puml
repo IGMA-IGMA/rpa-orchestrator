@@ -1,0 +1,86 @@
+@startuml
+' Фиксированный темный фон
+skinparam backgroundcolor #1E1E24
+skinparam defaultFontName "Verdana"
+
+' Настройка цветов участников
+skinparam actor {
+    BackgroundColor #34495E
+    BorderColor #5DADE2
+    FontColor #FFFFFF
+}
+skinparam participant {
+    BackgroundColor #2C3E50
+    BorderColor #5DADE2
+    FontColor #FFFFFF
+}
+skinparam database {
+    BackgroundColor #2E4053
+    BorderColor #F4D03F
+    FontColor #FFFFFF
+}
+
+' Настройка стрелок и текста
+skinparam ArrowColor #5DADE2
+skinparam ArrowThickness 2
+skinparam ArrowFontColor #AEB6BF
+skinparam NoteBackgroundColor #283747
+skinparam NoteBorderColor #5DADE2
+skinparam NoteFontColor #EAEDED
+
+title Процесс асинхронной обработки и генерации отчетов\n
+
+actor "Пользователь\n(Браузер)" as User
+participant "Django App\n(Backend)" as Django
+database "Redis 7\n(Брокер)" as Redis
+participant "Celery Worker\n(Воркер)" as Celery
+database "PostgreSQL\n(БД)" as DB
+
+autonumber "<b>[0]</b>"
+
+User -> Django : Запуск задачи через HTMX (POST)
+activate Django
+
+Django -> DB : Создание записи о задаче (Статус: PENDING)
+activate DB
+DB --> Django : ID задачи успешно сохранен
+deactivate DB
+
+Django -> Redis : Пуш задачи в очередь задач Celery
+activate Redis
+Redis --> Django : Задача принята в брокер
+deactivate Redis
+
+Django --> User : HTTP 200 OK (Возврат UI-компонента со статусом ожидания)
+deactivate Django
+
+... Воркер подхватывает задачу асинхронно ...
+
+Celery -> Redis : Забор задачи из очереди
+activate Celery
+activate Redis
+Redis --> Celery : Данные задачи (Email парсинг / PDF)
+deactivate Redis
+
+Celery -> DB : Обновление статуса в БД (Статус: STARTED)
+
+note over Celery
+  **Выполнение бизнес-логики:**
+  1. BeautifulSoup4 парсит входящие Email
+  2. ReportLab собирает PDF-документ отчета
+end note
+
+Celery -> DB : Сохранение PDF и обновление (Статус: SUCCESS)
+deactivate Celery
+
+User -> Django : HTMX периодический опрос (Polling каждые 3 сек)
+activate Django
+Django -> DB : Запрос статуса по ID задачи
+activate DB
+DB --> Django : Возврат статуса (SUCCESS + ссылка на PDF)
+deactivate DB
+Django --> User : Обновление UI (Кнопка "Скачать PDF")
+deactivate Django
+
+@enduml
+

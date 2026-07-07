@@ -1,0 +1,38 @@
+@startuml
+skinparam backgroundcolor #1E1E24
+skinparam defaultFontName "Verdana"
+skinparam DefaultTextAlignment center
+skinparam componentStyle rectangle
+
+' Стилизация C4 элементов нативными средствами
+skinparam rectangle {
+    BackgroundColor<<Person>> #08427B
+    BorderColor<<Person>> #052E56
+    FontColor<<Person>> #FFFFFF
+    
+    BackgroundColor<<System>> #1168BD
+    BorderColor<<System>> #0B4E8F
+    FontColor<<System>> #FFFFFF
+    
+    BackgroundColor<<ExternalSystem>> #666666
+    BorderColor<<ExternalSystem>> #4D4D4D
+    FontColor<<ExternalSystem>> #FFFFFF
+}
+
+skinparam ArrowColor #5DADE2
+skinparam ArrowThickness 2
+skinparam ArrowFontColor #AEB6BF
+
+title [C4 Level 1] RPA Оркестратор - Системный контекст (System Context)\n
+
+rectangle "👨 Оператор / Разработчик\n[Person]\n\nУправляет RPA-ботами, логами\nи скачивает отчеты." as user <<Person>>
+
+rectangle "⚙️ RPA Оркестратор\n[Software System]\n\nКоординирует роботов,\nпарсит email, генерирует отчеты." as orchestrator <<System>>
+
+rectangle "📧 Почтовый сервер (IMAP)\n[External System]\n\nВнешний почтовый ящик\nкорпорации с письмами." as email_server <<ExternalSystem>>
+
+' Связи
+user -right-> orchestrator : Управляет ботами и дашбордом\n[HTTP / HTMX]
+orchestrator -right-> email_server : Скачивает новые письма\n[IMAP / SSL]
+
+@enduml

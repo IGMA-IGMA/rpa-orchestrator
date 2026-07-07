@@ -1,0 +1,46 @@
+@startuml
+' Фиксированный красивый темный фон
+skinparam backgroundcolor #1E1E24
+skinparam defaultFontName "Verdana"
+skinparam DefaultTextAlignment center
+
+' Стилизация состояний (округлые блоки)
+skinparam state {
+    BackgroundColor #2C3E50
+    BorderColor #5DADE2
+    FontColor #FFFFFF
+    StartColor #5DADE2
+    EndColor #E74C3C
+}
+
+' Стилизация стрелок и подписей
+skinparam ArrowColor #5DADE2
+skinparam ArrowThickness 2
+skinparam ArrowFontColor #AEB6BF
+
+title Жизненный цикл фоновой задачи Celery\n
+
+' Весь успешный процесс идет горизонтально слева направо
+[*] -right-> PENDING : Задача создана в Django\nи отправлена в Redis
+
+PENDING -right-> STARTED : Celery Worker\nвзял задачу в работу
+
+state STARTED {
+    [*] -right-> Email_Parsing : BeautifulSoup4\nизвлекает данные
+    Email_Parsing -right-> PDF_Generation : Данные получены\nуспешно
+    PDF_Generation -right-> [*] : PDF файл\nсформирован
+}
+
+STARTED -right-> SUCCESS : Задача завершена успешно\n(Файл готов к скачиванию)
+SUCCESS -right-> [*] : Пользователь\nскачал CSV/PDF отчет
+
+' Ошибочный флоу спускаем строго вниз под воркера, чтобы не пересекаться с успехом
+STARTED -down-> FAILURE : Произошла ошибка\n(Таймаут, сбой парсинга)
+
+' Отклонения и повторы выстраиваем внизу под блоком ошибок
+FAILURE -left-> RETRY : Авто-ретрай\nпри сбое
+RETRY -up-> PENDING : Возврат в очередь
+
+FAILURE -down-> [*] : Логирование ошибки\nв PostgreSQL
+
+@enduml
