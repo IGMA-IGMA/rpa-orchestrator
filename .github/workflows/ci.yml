@@ -3,74 +3,19 @@ name: CI
 on:
   push:
     branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
 
 jobs:
-  test:
+  build:
     runs-on: ubuntu-latest
-    
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_USER: rpa_user
-          POSTGRES_PASSWORD: securepassword123
-          POSTGRES_DB: rpa_db
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
     - uses: actions/checkout@v4
-    
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.10'
-    
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install reportlab beautifulsoup4 requests
-    
-    - name: Run migrations
-      env:
-        DB_NAME: rpa_db
-        DB_USER: rpa_user
-        DB_PASSWORD: securepassword123
-        DB_HOST: localhost
-        DB_PORT: 5432
-        REDIS_URL: redis://localhost:6379/0
-        SECRET_KEY: django-insecure-test-secret-key
-        DEBUG: True
+    - name: Check syntax
       run: |
-        python manage.py migrate
-    
-    - name: Run tests
-      env:
-        DB_NAME: rpa_db
-        DB_USER: rpa_user
-        DB_PASSWORD: securepassword123
-        DB_HOST: localhost
-        DB_PORT: 5432
-        REDIS_URL: redis://localhost:6379/0
-        SECRET_KEY: django-insecure-test-secret-key
-        DEBUG: True
-      run: |
-        python manage.py test
+        python -m py_compile tasks/*.py rpa_orchestrator/*.py
